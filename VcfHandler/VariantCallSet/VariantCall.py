@@ -136,3 +136,16 @@ class VariantCall:
         """
 
         return "chrom: {" + self.GetChromosome() + "} pos: {" + self.GetPosition() + "} ref: {" + self.GetRef() + "} alt: {" + self.GetAlt() + "} individuals: {" + str(len(self.GetIndividualCalls())) + "}"
+
+
+    def ToFullString(self):
+        """
+        Displays the result of ToString() + adds the information about genotypes
+        """
+
+        result = self.ToString()
+
+        for variant_call_value in self.GetIndividualCalls():
+            result += variant_call_value.ToString() + " "
+
+        return result

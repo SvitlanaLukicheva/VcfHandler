@@ -6,7 +6,8 @@ Implements a reader of VCF files.
 """
 
 
-from VariantCallSet.IndividualCallValue import IndividualCallValue
+from Generators.SfsGenerator import SfsGenerator
+from VariantCallSet.IndividualCallValue import IndividualCallValue, Genotype
 from VariantCallSet.VariantCall import VariantCall
 from VariantCallSet.VariantCallSet import VariantCallSet
 
@@ -22,28 +23,33 @@ class VcfReader:
 
     # Constructor
 
-    def __init__(self, **kwargs):
+    def __init__(self, enable_debug: bool = False, **kwargs):
         """
         Constructor
         """
 
         self.variant_call_set = VariantCallSet()
 
+        self.sfs_generator = None
+
+        self.enable_debug = enable_debug
+
 
 
     # Methods
 
-    def ReadFile(self, file_name: str):
+    def ReadFile(self, file_name: str, sfs_generator: SfsGenerator = None):
         """
         Reads the VCF filename provided in parameter
         """
 
-        file = open(file_name, "r")
+        self.sfs_generator = sfs_generator
 
+        file = open(file_name, "r")
         for line in file:
             self.ReadLine(line)
-
         file.close()
+        
 
 
     def ReadLine(self, line: str):
@@ -72,6 +78,11 @@ class VcfReader:
                     is_phased = True if genotype[1] == "|" else False
                 else:
                     raise Exception("Invalid genotype format: " + genotype)
+                    
                 variant_call.AddIndividualCall(IndividualCallValue(genotype_0, genotype_1, is_phased))
 
-            print("I read " + variant_call.ToString())
+            if(self.enable_debug):
+                print("I read " + variant_call.ToFullString())
+
+            if(self.sfs_generator != None):
+                self.sfs_generator.AddVariantCall(variant_call)

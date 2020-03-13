@@ -22,6 +22,15 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Generators\GenericGenerator.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Generators\SfsGenerator.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Generators\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Readers\VcfReader.py">
       <SubType>Code</SubType>
     </Compile>
