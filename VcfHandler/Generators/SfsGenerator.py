@@ -43,6 +43,9 @@ class SfsGenerator(GenericGenerator):
         # spectrum for the population 2, will be initialized after config parsing
         self.population_2_spectrum = []
 
+        # joint folded spectrum of both populations: a two-dimensional matrix that will be initialized after config parsing
+        self.two_populations_spectrum = []
+
         self.enable_debug = enable_debug
 
         self.ReadConfig()
@@ -65,6 +68,8 @@ class SfsGenerator(GenericGenerator):
         If population id is "N/A", the corresponding individual is not taken
         into account for the computation of the SFS file.
         """
+
+        print("Reading SFS config...")
 
         file = open(self.config_file_name, "r")
 
@@ -95,18 +100,24 @@ class SfsGenerator(GenericGenerator):
 
         file.close()
 
-        print("Config file read. Found " + str(len(self.population_names)) + " populations. Pop 1 indices: [" + str(self.population_1_indices).strip('[]') + "], pop 2 indices: [" + str(self.population_2_indices).strip('[]') + "]");
+        # print("Config file read. Found " + str(len(self.population_names)) + " populations. Pop 1 indices: [" + str(self.population_1_indices).strip('[]') + "], pop 2 indices: [" + str(self.population_2_indices).strip('[]') + "]");
+
+        print("Done.")
 
 
     def InitializeSpectra(self):
         """
-        Initializes the spectra of the populations after config reading
+        Initializes the spectra of the populations with 0 after config reading
         Each spectrum contains the number of elements equal to 
         2 * its population size (since individuals are diploid) + 1 (for nocalls)
+        Dimensions of two populations spectrum correspond to the dimensions of each spectrum
         """
 
         self.population_1_spectrum = [0] * (1 + 2*len(self.population_1_indices))
         self.population_2_spectrum = [0] * (1 + 2*len(self.population_2_indices))
+        self.two_populations_spectrum = [0] * len(self.population_1_spectrum)
+        for i in range (0, len(self.population_1_spectrum)):
+            self.two_populations_spectrum[i] =  [0] * len(self.population_2_spectrum)
 
 
     def AddVariantCall(self, variant_call: VariantCall):
@@ -152,19 +163,47 @@ class SfsGenerator(GenericGenerator):
 
         self.population_1_spectrum[min(pop_1_ref_cnt, pop_1_alt_cnt)] += 1
         self.population_2_spectrum[min(pop_2_ref_cnt, pop_2_alt_cnt)] += 1
+        self.two_populations_spectrum[min(pop_1_ref_cnt, pop_1_alt_cnt)][min(pop_2_ref_cnt, pop_2_alt_cnt)] += 1
 
-        print("Variant call added. Spectrums: pop1: [" + str(self.population_1_spectrum).strip('[]') + "], pop2: [" + str(self.population_2_spectrum).strip('[]') + "]")
+        # print("Variant call added. Spectrums: pop1: [" + str(self.population_1_spectrum).strip('[]') + "], pop2: [" + str(self.population_2_spectrum).strip('[]') + "]")
 
 
     def GenerateOutputfile(self, file_name: str):
         """
         Generated the output file in the format of the reader
+        In this case, two files are generated:
+        - one in dadi format (prefixed with 'dadi_')
+        - one in FastSimCoal format (prefixed with ('fsc_')
         """
 
-        result = ""
+        #
+
+        result_dadi = str(len(self.population_1_spectrum)) + " " + str(len(self.population_2_spectrum)) + "\n"
+
+        result_fsc = "1 observations\n"
+        for j in range(0, len(self.population_2_spectrum)):
+            result_fsc += "\td_" + str(j)
+        result_fsc += "\n"
 
         for i in range(0, len(self.population_1_spectrum)):
             for j in range(0, len(self.population_2_spectrum)):
-                result += str(self.population_1_spectrum[i] + self.population_2_spectrum[j]) + " "
+                result_dadi += str(self.two_populations_spectrum[i][j]) + " "
+                if(j == 0):
+                    result_fsc += "d_" + str(i)
+                result_fsc += "\t" + str(self.two_populations_spectrum[i][j])
+                if(j == len(self.population_2_spectrum) - 1):
+                    result_fsc += "\n"
 
-        print(result)
+        print(result_dadi)
+
+        print("Generating output file in dadi format...")
+        dadi_file = open("dadi_" + file_name, "w")
+        dadi_file.write(result_dadi)
+        dadi_file.close()
+
+        print("Generating output file in FastSimCoal format...")
+        fsc_file = open("fsc_" + file_name, "w")
+        fsc_file.write(result_fsc)
+        fsc_file.close()
+
+        print("Done.")
