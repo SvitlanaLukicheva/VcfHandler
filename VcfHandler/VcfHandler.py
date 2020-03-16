@@ -7,8 +7,8 @@ from Generators.SfsGenerator import SfsGenerator
 
 vcf_reader = VcfReader()
 
-sfs_generator = SfsGenerator("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\population.txt")
+sfs_generator = SfsGenerator("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\popfile_dadi.txt")
 
-vcf_reader.ReadFile("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\test.vcf", sfs_generator)
+vcf_reader.ReadFile("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\example_dadi.vcf", sfs_generator)
 
-sfs_generator.GenerateOutputfile("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\result.out")
+sfs_generator.GenerateOutputfile("result.out")
