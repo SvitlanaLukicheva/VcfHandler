@@ -43,12 +43,16 @@ class VcfReader:
         Reads the VCF filename provided in parameter
         """
 
+        print("Reading file " + file_name + "...")
+
         self.sfs_generator = sfs_generator
 
         file = open(file_name, "r")
         for line in file:
             self.ReadLine(line)
         file.close()
+
+        print("Done.")
         
 
 
@@ -62,7 +66,9 @@ class VcfReader:
             line_parts = re.split(r' +', line)  # elements on a line a separated by a variable number of empty spaces
 
             if(len(line_parts) < 9):  # variant call must have at least 9 standard fields
-                raise Exception("Incorrect format for the varian call " + line)
+                line_parts = re.split(r'\t+', line)  # then we check tab separator
+                if(len(line_parts) < 9):  # variant call must have at least 9 standard fields
+                    raise Exception("Incorrect format for the varian call " + line)
 
             # creation of a variant call with the standard fields
             variant_call = VariantCall(line_parts[0], line_parts[1], line_parts[2], line_parts[3], line_parts[4], line_parts[5], line_parts[6], line_parts[7], line_parts[8])
