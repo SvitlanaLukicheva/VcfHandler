@@ -43,7 +43,7 @@ class SfsGenerator(GenericGenerator):
         # spectrum for the population 2, will be initialized after config parsing
         self.population_2_spectrum = []
 
-        # joint folded spectrum of both populations: a two-dimensional matrix that will be initialized after config parsing
+        # joint spectrum of both populations: a two-dimensional matrix that will be initialized after config parsing
         self.two_populations_spectrum = []
 
         self.enable_debug = enable_debug
@@ -105,6 +105,7 @@ class SfsGenerator(GenericGenerator):
         print("Done.")
 
 
+
     def InitializeSpectra(self):
         """
         Initializes the spectra of the populations with 0 after config reading
@@ -117,7 +118,8 @@ class SfsGenerator(GenericGenerator):
         self.population_2_spectrum = [0] * (1 + 2*len(self.population_2_indices))
         self.two_populations_spectrum = [0] * len(self.population_1_spectrum)
         for i in range (0, len(self.population_1_spectrum)):
-            self.two_populations_spectrum[i] =  [0] * len(self.population_2_spectrum)
+            self.two_populations_spectrum[i] = [0] * len(self.population_2_spectrum)
+
 
 
     def AddVariantCall(self, variant_call: VariantCall):
@@ -125,32 +127,20 @@ class SfsGenerator(GenericGenerator):
         Adds the provided vairant call to the file content
         """
 
-        pop_1_ref_cnt = 0
         pop_1_alt_cnt = 0
-        pop_2_ref_cnt = 0
         pop_2_alt_cnt = 0
 
         i = 0
         while i < len(variant_call.GetIndividualCalls()):
             individual_call_value = variant_call.GetIndividualCalls()[i]
 
-            if(individual_call_value.GetGenotype0() == Genotype.REF):
-                if(i in self.population_1_indices):
-                    pop_1_ref_cnt += 1
-                elif(i in self.population_2_indices):
-                    pop_2_ref_cnt +=1
-            elif(individual_call_value.GetGenotype0() == Genotype.ALT):
+            if(individual_call_value.GetGenotype0() == Genotype.ALT):
                 if(i in self.population_1_indices):
                     pop_1_alt_cnt += 1
                 elif(i in self.population_2_indices):
                     pop_2_alt_cnt +=1
 
-            if(individual_call_value.GetGenotype1() == Genotype.REF):
-                if(i in self.population_1_indices):
-                    pop_1_ref_cnt += 1
-                elif(i in self.population_2_indices):
-                    pop_2_ref_cnt +=1
-            elif(individual_call_value.GetGenotype1() == Genotype.ALT):
+            if(individual_call_value.GetGenotype1() == Genotype.ALT):
                 if(i in self.population_1_indices):
                     pop_1_alt_cnt += 1
                 elif(i in self.population_2_indices):
@@ -159,13 +149,14 @@ class SfsGenerator(GenericGenerator):
             i+=1
 
         if(self.enable_debug):
-            print("INDICES ARE: 1_ref: " + str(pop_1_ref_cnt) + ", 1_alt: " + str(pop_1_alt_cnt) + ", 2_ref: " + str(pop_2_ref_cnt) + ", 2_alt: " + str(pop_2_alt_cnt))
+            print("INDICES ARE: 1_alt: " + str(pop_1_alt_cnt) + ", 2_alt: " + str(pop_2_alt_cnt))
 
-        self.population_1_spectrum[min(pop_1_ref_cnt, pop_1_alt_cnt)] += 1
-        self.population_2_spectrum[min(pop_2_ref_cnt, pop_2_alt_cnt)] += 1
-        self.two_populations_spectrum[min(pop_1_ref_cnt, pop_1_alt_cnt)][min(pop_2_ref_cnt, pop_2_alt_cnt)] += 1
+        self.population_1_spectrum[pop_1_alt_cnt] += 1
+        self.population_2_spectrum[pop_2_alt_cnt] += 1
+        self.two_populations_spectrum[pop_1_alt_cnt][pop_2_alt_cnt] += 1
 
         # print("Variant call added. Spectrums: pop1: [" + str(self.population_1_spectrum).strip('[]') + "], pop2: [" + str(self.population_2_spectrum).strip('[]') + "]")
+
 
 
     def GenerateOutputfile(self, file_name: str):
@@ -176,11 +167,13 @@ class SfsGenerator(GenericGenerator):
         - one in FastSimCoal format (prefixed with ('fsc_')
         """
 
-        #
+        folded_spectrum = self.generateFoldedSpectrum()
 
         result_dadi = str(len(self.population_1_spectrum)) + " " + str(len(self.population_2_spectrum)) + "\n"
+        result_dadi_folded = str(len(self.population_1_spectrum)) + " " + str(len(self.population_2_spectrum)) + "\n"
 
         result_fsc = "1 observations\n"
+        result_fsc_folded = "1 observations\n"
         for j in range(0, len(self.population_2_spectrum)):
             result_fsc += "\td_" + str(j)
         result_fsc += "\n"
@@ -188,11 +181,15 @@ class SfsGenerator(GenericGenerator):
         for i in range(0, len(self.population_1_spectrum)):
             for j in range(0, len(self.population_2_spectrum)):
                 result_dadi += str(self.two_populations_spectrum[i][j]) + " "
+                result_dadi_folded += str(folded_spectrum[i][j]) + " "
                 if(j == 0):
                     result_fsc += "d_" + str(i)
+                    result_fsc_folded += "d_" + str(i)
                 result_fsc += "\t" + str(self.two_populations_spectrum[i][j])
+                result_fsc_folded += "\t" + str(folded_spectrum[i][j])
                 if(j == len(self.population_2_spectrum) - 1):
                     result_fsc += "\n"
+                    result_fsc_folded += "\n"
 
         print(result_dadi)
 
@@ -201,9 +198,53 @@ class SfsGenerator(GenericGenerator):
         dadi_file.write(result_dadi)
         dadi_file.close()
 
+        print("Generating output file in dadi folded format...")
+        dadi_file = open("dadi_folded_" + file_name, "w")
+        dadi_file.write(result_dadi_folded)
+        dadi_file.close()
+
         print("Generating output file in FastSimCoal format...")
         fsc_file = open("fsc_" + file_name, "w")
         fsc_file.write(result_fsc)
         fsc_file.close()
 
+        print("Generating output file in FastSimCoal format...")
+        fsc_file = open("fsc_folded_" + file_name, "w")
+        fsc_file.write(result_fsc_folded)
+        fsc_file.close()
+
         print("Done.")
+
+
+
+    def generateFoldedSpectrum(self):
+        """
+        Generated the output file in the format of the reader
+        In this case, two files are generated:
+        - one in dadi format (prefixed with 'dadi_')
+        - one in FastSimCoal format (prefixed with ('fsc_')
+        """
+
+        print("Computing folded spectrum...")
+
+        # initialization
+        folded_spectrum = [0] * len(self.population_1_spectrum)
+        for i in range (0, len(self.population_1_spectrum)):
+            folded_spectrum[i] = [0] * len(self.population_2_spectrum)
+
+        # computation of the folded spectrum:
+        # first, make a sum of the unfolded spectrum with itself reversed
+        # then set the elements of the left down corner to 0
+        # finally, divide its values on the diagonal by 2
+        for i in range (0, len(self.population_1_spectrum)):
+            for j in range (0, len(self.population_2_spectrum)):
+                if(i + j > (len(self.population_1_spectrum) + len(self.population_2_spectrum)) / 2 - 1):
+                    folded_spectrum[i][j] = 0
+                else:
+                    folded_spectrum[i][j] = self.two_populations_spectrum[i][j] + self.two_populations_spectrum[len(self.population_1_spectrum) - i - 1][len(self.population_2_spectrum) - j - 1]
+                if(i + j == (len(self.population_1_spectrum) + len(self.population_2_spectrum)) / 2 - 1 and folded_spectrum[i][j] != 0):
+                    folded_spectrum[i][j] /= 2
+
+        print("Done")
+
+        return folded_spectrum
