@@ -11,6 +11,8 @@ from VariantCallSet.IndividualCallValue import IndividualCallValue, Genotype
 from VariantCallSet.VariantCall import VariantCall
 from VariantCallSet.VariantCallSet import VariantCallSet
 
+from datetime import datetime
+
 import re
 
 
@@ -43,16 +45,20 @@ class VcfReader:
         Reads the VCF filename provided in parameter
         """
 
-        print("Reading file " + file_name + "...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Reading file " + file_name + "...")
 
         self.sfs_generator = sfs_generator
 
         file = open(file_name, "r")
+        line_cnt = 0
         for line in file:
             self.ReadLine(line)
+            line_cnt += 1
+            if(line_cnt % 10000 == 0):
+                print(datetime.now().strftime("%H:%M:%S") + ": Read " + str(line_cnt) + " lines...")
         file.close()
 
-        print("Done.")
+        print(datetime.now().strftime("%H:%M:%S") + ": Done.")
         
 
 
