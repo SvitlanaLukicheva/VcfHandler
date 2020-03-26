@@ -94,7 +94,8 @@ class VcfReader:
                 variant_call.AddIndividualCall(IndividualCallValue(genotype_0, genotype_1, is_phased))
 
             if(self.enable_debug):
-                print("I read " + variant_call.ToFullString())
+                print("I read the line \"" + line + "\"")
+                print("The variant call is " + variant_call.ToFullString())
 
             if(self.sfs_generator != None):
                 self.sfs_generator.AddVariantCall(variant_call)
