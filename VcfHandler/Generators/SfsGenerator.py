@@ -10,6 +10,8 @@ from Generators.GenericGenerator import GenericGenerator
 from VariantCallSet.VariantCall import VariantCall
 from VariantCallSet.IndividualCallValue import IndividualCallValue, Genotype
 
+from datetime import datetime
+
 import re
 
 
@@ -69,40 +71,39 @@ class SfsGenerator(GenericGenerator):
         into account for the computation of the SFS file.
         """
 
-        print("Reading SFS config...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Reading SFS config...")
 
         file = open(self.config_file_name, "r")
 
         index = 0
 
         for line in file:
-            line_parts = re.split(r'\t+', line)
+            line_parts = re.split(r'\t+', line.replace("\n", ""))
             if(len(line_parts) < 2):
                raise Exception("Wrong format for config line \"" + line + "\"")
 
             individual_name = line_parts[0]
             population_name = line_parts[1]
 
-            if(population_name == "N/A"):
-                pass
+            if(population_name != "N/A"):
+                if(not population_name in self.population_names):
+                    if(len(self.population_names) == 2):
+                        raise Exception("Only two populations can be handled for the moment for SFS file generation")
+                    self.population_names.append(population_name)
 
-            if(not population_name in self.population_names):
-                if(len(self.population_names) == 2):
-                    raise Exception("Only two populations can be handled for the moment for SFS file generation")
-                self.population_names.append(population_name)
-
-            if(self.population_names.index(population_name) == 0):  # this is the first population
-                self.population_1_indices.append(index)
-            else:
-                self.population_2_indices.append(index)
+                if(self.population_names.index(population_name) == 0):  # this is the first population
+                    self.population_1_indices.append(index)
+                else:
+                    self.population_2_indices.append(index)
 
             index += 1
 
         file.close()
 
-        # print("Config file read. Found " + str(len(self.population_names)) + " populations. Pop 1 indices: [" + str(self.population_1_indices).strip('[]') + "], pop 2 indices: [" + str(self.population_2_indices).strip('[]') + "]");
+        if(self.enable_debug):
+            print("Config file read. Found " + str(len(self.population_names)) + " populations. Pop 1 indices: [" + str(self.population_1_indices).strip('[]') + "], pop 2 indices: [" + str(self.population_2_indices).strip('[]') + "]");
 
-        print("Done.")
+        print(datetime.now().strftime("%H:%M:%S") + ": Done.")
 
 
 
@@ -154,8 +155,9 @@ class SfsGenerator(GenericGenerator):
         self.population_1_spectrum[pop_1_alt_cnt] += 1
         self.population_2_spectrum[pop_2_alt_cnt] += 1
         self.two_populations_spectrum[pop_1_alt_cnt][pop_2_alt_cnt] += 1
-
-        # print("Variant call added. Spectrums: pop1: [" + str(self.population_1_spectrum).strip('[]') + "], pop2: [" + str(self.population_2_spectrum).strip('[]') + "]")
+        
+        if(self.enable_debug):
+            print("Variant call added. Spectrums: pop1: [" + str(self.population_1_spectrum).strip('[]') + "], pop2: [" + str(self.population_2_spectrum).strip('[]') + "]")
 
 
 
@@ -173,10 +175,10 @@ class SfsGenerator(GenericGenerator):
         result_dadi_folded = str(len(self.population_1_spectrum)) + " " + str(len(self.population_2_spectrum)) + "\n"
 
         result_fsc = "1 observations\n"
-        result_fsc_folded = "1 observations\n"
         for j in range(0, len(self.population_2_spectrum)):
             result_fsc += "\td_" + str(j)
         result_fsc += "\n"
+        result_fsc_folded = result_fsc
 
         for i in range(0, len(self.population_1_spectrum)):
             for j in range(0, len(self.population_2_spectrum)):
@@ -191,29 +193,27 @@ class SfsGenerator(GenericGenerator):
                     result_fsc += "\n"
                     result_fsc_folded += "\n"
 
-        print(result_dadi)
-
-        print("Generating output file in dadi format...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Generating output file in dadi format...")
         dadi_file = open("dadi_" + file_name, "w")
         dadi_file.write(result_dadi)
         dadi_file.close()
 
-        print("Generating output file in dadi folded format...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Generating output file in dadi folded format...")
         dadi_file = open("dadi_folded_" + file_name, "w")
         dadi_file.write(result_dadi_folded)
         dadi_file.close()
 
-        print("Generating output file in FastSimCoal format...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Generating output file in FastSimCoal format...")
         fsc_file = open("fsc_" + file_name, "w")
         fsc_file.write(result_fsc)
         fsc_file.close()
 
-        print("Generating output file in FastSimCoal format...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Generating output file in FastSimCoal format...")
         fsc_file = open("fsc_folded_" + file_name, "w")
         fsc_file.write(result_fsc_folded)
         fsc_file.close()
 
-        print("Done.")
+        print(datetime.now().strftime("%H:%M:%S") + ": Done.")
 
 
 
@@ -225,7 +225,7 @@ class SfsGenerator(GenericGenerator):
         - one in FastSimCoal format (prefixed with ('fsc_')
         """
 
-        print("Computing folded spectrum...")
+        print(datetime.now().strftime("%H:%M:%S") + ": Computing folded spectrum...")
 
         # initialization
         folded_spectrum = [0] * len(self.population_1_spectrum)
@@ -245,6 +245,6 @@ class SfsGenerator(GenericGenerator):
                 if(i + j == (len(self.population_1_spectrum) + len(self.population_2_spectrum)) / 2 - 1 and folded_spectrum[i][j] != 0):
                     folded_spectrum[i][j] /= 2
 
-        print("Done")
+        print(datetime.now().strftime("%H:%M:%S") + ": Done")
 
         return folded_spectrum
