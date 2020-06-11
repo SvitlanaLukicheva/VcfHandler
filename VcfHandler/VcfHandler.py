@@ -10,9 +10,9 @@ vcf_reader = VcfReader()
 test_example_file = False
 test_full_vcf_with_t10_processed = False
 test_full_vcf_without_t10_processed = False
-test_vcf_without_t10 = True
+test_vcf_without_t10 = False
 test_gi_vcf = False
-test_gq_vcf = False
+test_gq_vcf = True
 
 if(test_example_file == True):
     sfs_generator = SfsGenerator("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\example_dadi\\popfile_dadi.txt")
@@ -36,10 +36,10 @@ if(test_vcf_without_t10 == True):
 
 if(test_gi_vcf == True):
     sfs_generator = SfsGenerator("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\popfile_gi.txt")
-    vcf_reader.ReadFile("F:\\introgression\\results\\gatk\\genotype_gvcfs\\gi_no_physical_mapping_all_calls\\result\\gi_cohort_no_physical_mapping.vcf", sfs_generator)
+    vcf_reader.ReadFile("G:\\introgression\\results\\gatk\\select_variants\\full_no_phasing\\gi\\remove_nocalls\\result\\gi_filtered_cohort_no_nocalls.vcf", sfs_generator)
     sfs_generator.GenerateOutputfile("result_gi")
 
 if(test_gq_vcf == True):
     sfs_generator = SfsGenerator("C:\\Users\\svitl\\Desktop\\test_sfs_generator\\popfile_gq.txt")
-    vcf_reader.ReadFile("F:\\introgression\\results\\gatk\\genotype_gvcfs\\gq_no_physical_mapping_all_calls\\result\\gq_cohort_no_physical_mapping.vcf", sfs_generator)
+    vcf_reader.ReadFile("G:\\introgression\\results\\gatk\\select_variants\\full_no_phasing\\gq\\remove_nocalls\\result\\gq_filtered_cohort_no_nocalls.vcf", sfs_generator)
     sfs_generator.GenerateOutputfile("result_gq")
