@@ -74,7 +74,7 @@ class VcfReader:
             if(len(line_parts) < 9):  # variant call must have at least 9 standard fields
                 line_parts = re.split(r'\t+', line)  # then we check tab separator
                 if(len(line_parts) < 9):  # variant call must have at least 9 standard fields
-                    raise Exception("Incorrect format for the varian call " + line)
+                    raise Exception("Incorrect format for the variant call " + line)
 
             # creation of a variant call with the standard fields
             variant_call = VariantCall(line_parts[0], line_parts[1], line_parts[2], line_parts[3], line_parts[4], line_parts[5], line_parts[6], line_parts[7], line_parts[8])
